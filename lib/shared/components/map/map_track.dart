@@ -362,6 +362,42 @@ class _MapTrackState extends State<MapTrack> {
     _positionStream?.cancel();
     super.dispose();
   }
+  Future<void> _openExternalDirections() async {
+    final dest = '${widget.latitudeS},${widget.longitudeS}';
+
+    // If we already have the user position, use it as origin
+    if (_currentPosition != null) {
+      final origin = '${_currentPosition!.latitude},${_currentPosition!.longitude}';
+
+      // Try Google Maps app (if installed)
+      final gmApp = Uri.parse('comgooglemaps://?saddr=$origin&daddr=$dest&directionsmode=driving');
+      if (await canLaunchUrl(gmApp)) {
+        await launchUrl(gmApp, mode: LaunchMode.externalApplication);
+        return;
+      }
+
+      // Web fallback with explicit origin
+      final web = Uri.parse('https://www.google.com/maps/dir/?api=1&origin=$origin&destination=$dest&travelmode=driving');
+      final ok = await launchUrl(web, mode: LaunchMode.externalApplication);
+      if (!ok) {
+        await launchUrl(web, mode: LaunchMode.platformDefault);
+      }
+      return;
+    }
+
+    // No current position yet → let Maps resolve device location
+    final gmNoOrigin = Uri.parse('comgooglemaps://?daddr=$dest&directionsmode=driving');
+    if (await canLaunchUrl(gmNoOrigin)) {
+      await launchUrl(gmNoOrigin, mode: LaunchMode.externalApplication);
+      return;
+    }
+
+    final webNoOrigin = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$dest&travelmode=driving');
+    final ok = await launchUrl(webNoOrigin, mode: LaunchMode.externalApplication);
+    if (!ok) {
+      await launchUrl(webNoOrigin, mode: LaunchMode.platformDefault);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -401,11 +437,25 @@ class _MapTrackState extends State<MapTrack> {
                   myLocationButtonEnabled: true,
                 ),
               ),
+              if (widget.onFullScreen)
+                Positioned(
+                  top: 360,
+                  right: 320,
+                  child: DefaultButton(
+                    textStyle: AppTextStyle.mediumWhite12,
+                    width: 80,
+                    height: 28,
+                    text: 'تتبع المسار',
+                    pressed: _openExternalDirections, // <-- call the method
+                    activated: true,
+                  ),
+                ),
+
               // Route info overlay
               if (_estimatedTime != null && _estimatedDistance != null)
                 Positioned(
                   top: 10,
-                  right: 10,
+                  right: 320,
                   child: Container(
                     padding: EdgeInsets.all(12),
                     decoration: BoxDecoration(

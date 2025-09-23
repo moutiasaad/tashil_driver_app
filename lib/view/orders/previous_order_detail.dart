@@ -1,3 +1,5 @@
+import 'package:delivery_app/models/merchant_model.dart';
+import 'package:delivery_app/providers/merchant_provider.dart';
 import 'package:dotted_line/dotted_line.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -40,7 +42,6 @@ class _PreviousOrderDetailState extends State<PreviousOrderDetail> {
 
   @override
   void initState() {
-    orderDate = '';
     //     DateFormat('yyyy/MM/dd hh:mm a')
     //     .format(DateTime.parse(widget.data.createDate!));
     // print(widget.data.createDate);
@@ -267,6 +268,82 @@ class _PreviousOrderDetailState extends State<PreviousOrderDetail> {
                   ],
                 ),
               ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 16,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      spacing: 8,
+                      children: [
+                        SvgIcon(
+                          icon: AppIcons.orderCustomer, // use a store icon if you have one
+                          width: 24,
+                          height: 24,
+                        ),
+                        cText(
+                          text: context.translate('order.orderDetail.merchant'),
+                          style: AppTextStyle.semiBoldBlack14,
+                        ),
+                      ],
+                    ),
+
+                    // --- Merchant details from OrderModel ---
+                    Builder(
+                      builder: (context) {
+                        final name = widget.data.merchantFullName ?? '';
+                        final phone = widget.data.merchantPhone ?? '';
+                        final note  = widget.data.merchantNote ?? '';
+
+                        // If absolutely nothing exists, hide the section body.
+                        final hasAny = name.isNotEmpty || phone.isNotEmpty || note.isNotEmpty;
+                        if (!hasAny) return const SizedBox.shrink();
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          spacing: 6,
+                          children: [
+                            if (name.isNotEmpty)
+                              cText(
+                                text: name,
+                                style: AppTextStyle.semiBoldBlack14,
+                              ),
+
+                            if (phone.isNotEmpty)
+                              GestureDetector(
+                                onTap: () async {
+                                  final uri = Uri(scheme: 'tel', path: phone);
+                                  if (await canLaunchUrl(uri)) {
+                                    await launchUrl(uri);
+                                  }
+                                },
+                                child: Row(
+                                  spacing: 8,
+                                  children: [
+                                    const Icon(Icons.phone, size: 18, color: Colors.black54),
+                                    cText(
+                                      text: phone,
+                                      style: AppTextStyle.regularBlack1_14,
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                            if (note.isNotEmpty)
+                              cText(
+                                text: note,
+                                style: AppTextStyle.regularBlack1_14,
+                              ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
               Container(
                 width: double.infinity,
                 height: 6,

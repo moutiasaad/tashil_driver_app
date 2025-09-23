@@ -1,3 +1,5 @@
+import 'package:delivery_app/providers/LocationProvider.dart';
+import 'package:delivery_app/providers/merchant_provider.dart';
 import 'package:delivery_app/providers/notification_provider.dart';
 import 'package:delivery_app/providers/order_provider.dart';
 import 'package:delivery_app/providers/profile_provider.dart';
@@ -27,6 +29,7 @@ class ProviderConfig {
     ChangeNotifierProvider<NotificationProvider>(
       create: (_) => NotificationProvider(),
     ),
-
+    ChangeNotifierProvider(create: (_) => MerchantProvider()),
+    ChangeNotifierProvider(create: (_) => LocationProvider()),
   ];
 }

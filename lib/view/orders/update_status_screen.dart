@@ -1,7 +1,11 @@
 import 'package:delivery_app/models/order_status_model.dart';
+import 'package:delivery_app/providers/LocationProvider.dart';
+import 'package:delivery_app/providers/register_provider.dart';
 import 'package:delivery_app/shared/components/map/map_track.dart';
+import 'package:delivery_app/shared/local/cash_helper.dart';
 import 'package:dotted_line/dotted_line.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:delivery_app/shared/language/extension.dart';
 
@@ -296,12 +300,13 @@ class _UpdateStatusScreenState extends State<UpdateStatusScreen> {
     final Future<List<OrderStatusModel>>? statusFuture = order.getOrderStatus();
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // Important for full height
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
         int? _selectedStatusId;
+        String? _selectedStatusName;
 
         return DraggableScrollableSheet(
           expand: false,
@@ -346,6 +351,7 @@ class _UpdateStatusScreenState extends State<UpdateStatusScreen> {
                                   onTap: () {
                                     setModalState(() {
                                       _selectedStatusId = status[index].id;
+                                      _selectedStatusName = status[index].name;
                                     });
                                   },
                                   child: Container(
@@ -379,12 +385,118 @@ class _UpdateStatusScreenState extends State<UpdateStatusScreen> {
                         loading: order.updateStatus,
                         text: context.translate('buttons.updateOrder'),
                         raduis: 6,
-                        pressed: () {
-                          order.updateOrderStatus(
-                            context: context,
-                            orderId: orderId,
-                            status: _selectedStatusId!,
-                          );
+                        pressed: () async {
+                          print("selecttttttttttttt: '${_selectedStatusName!}'");
+                          print("Length: ${_selectedStatusName!.length}");
+
+                          // Clean the string for comparison
+                          String cleanSelectedStatus = _selectedStatusName!.trim().replaceAll(RegExp(r'\s+'), ' ');
+
+                          // Robust comparison
+                          bool isOnTheWay = cleanSelectedStatus == "في الطريق" ||
+                              _selectedStatusName!.contains("في الطريق") ||
+                              cleanSelectedStatus.contains("الطريق");
+
+                          bool isDelivered = cleanSelectedStatus == "تم التسليم" ||
+                              _selectedStatusName!.contains("تم التسليم") ||
+                              cleanSelectedStatus.contains("التسليم");
+
+                          print("Is on the way: $isOnTheWay");
+                          print("Is delivered: $isDelivered");
+
+                          if (isOnTheWay) {
+                            print("Starting location tracking flow...");
+                            // Check location permission before updating status
+                            final locationProvider = Provider.of<LocationProvider>(context, listen: false);
+                            final registerProvider = Provider.of<RegisterProvider>(context, listen: false);
+                            final driverId = await CashHelper.getUserId();
+                            try {
+                              // Request location permission
+                              LocationPermission permission = await Geolocator.checkPermission();
+                              if (permission == LocationPermission.denied) {
+                                permission = await Geolocator.requestPermission();
+                                if (permission != LocationPermission.whileInUse &&
+                                    permission != LocationPermission.always) {
+                                  // Show error if permission not granted
+                                  print("Location permission denied");
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(context.translate('errorsMessage.locationPermissionRequired')),
+                                    ),
+                                  );
+                                  return;
+                                }
+                              }
+
+                              print("Updating order status...");
+                              // Update order status first
+                              await order.updateOrderStatus(
+                                context: context,
+                                orderId: orderId,
+                                status: _selectedStatusId!,
+                              );
+
+                              // Start location tracking after successful status update
+                              // final driverId = 20; // Replace with actual driver ID
+
+                              print("Starting periodic tracking...");
+                              locationProvider.startPeriodicTracking(
+                                context: context,
+                                driverId: driverId,
+                                driverOrderId: orderId,
+                                interval: const Duration(seconds: 30),
+                              );
+
+                              // Show success message
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(context.translate('successMessage.statusUpdatedWithTracking')),
+                                ),
+                              );
+
+                              print("Location tracking started successfully");
+
+                            } catch (error) {
+                              print("Error in location tracking: $error");
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("Error: ${error.toString()}"),
+                                ),
+                              );
+                              return;
+                            }
+                          }
+                          else if (isDelivered) {
+                            print("Stopping location tracking flow...");
+                            // Update order status first
+                            await order.updateOrderStatus(
+                              context: context,
+                              orderId: orderId,
+                              status: _selectedStatusId!,
+                            );
+
+                            // Stop location tracking
+                            final locationProvider = Provider.of<LocationProvider>(context, listen: false);
+                            locationProvider.stopPeriodicTracking();
+
+                            // Show success message
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(context.translate('successMessage.statusUpdatedTrackingStopped')),
+                              ),
+                            );
+                            print("Location tracking stopped successfully");
+                          }
+                          else {
+                            print("Regular status update flow...");
+                            // For other statuses, just update the order status
+                            order.updateOrderStatus(
+                              context: context,
+                              orderId: orderId,
+                              status: _selectedStatusId!,
+                            );
+                            print("Regular status updated successfully");
+                          }
                         },
                       ),
                     ],
@@ -397,5 +509,4 @@ class _UpdateStatusScreenState extends State<UpdateStatusScreen> {
       },
     );
   }
-
 }

@@ -14,6 +14,9 @@ class OrderModel {
     this.totalPrice,
     this.address,
     this.phone,
+    this.merchantFullName,
+    this.merchantPhone,
+    this.merchantNote,
     this.clientNote,
     this.adminNote,
     this.startDeliveryDate,
@@ -42,6 +45,9 @@ class OrderModel {
   final String? totalPrice;
   final String? address;
   final String? phone;
+  final String? merchantFullName;
+  final String? merchantPhone;
+  final String? merchantNote;
   final String? clientNote;
   final String? adminNote;
   final String? startDeliveryDate;
@@ -74,6 +80,9 @@ class OrderModel {
           json['total_price'] != null ? json['total_price'].toString() : '0.0',
       address: json['address'] ?? '',
       phone: json['phone'] ?? '',
+      merchantFullName:json['marchent_fullname'] ?? '',
+      merchantPhone: json['marchent_phone'] ?? '',
+      merchantNote: json['marchent_note'] ?? '',
       clientNote: json['client_note'] ?? '',
       adminNote: json['admin_note'] ?? '',
       startDeliveryDate: json['start_date_delivery'] ?? '',

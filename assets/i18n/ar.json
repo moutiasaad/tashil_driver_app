@@ -111,6 +111,9 @@
     "deliveryFee": "رسوم التوصيل"
   },
   "errorsMessage": {
+    "locationPermissionRequired": "يطلب إذن الموقع لتتبع التسليم",
+
+
     "getData": "حدث خطأ اثناء تحميل البيانات",
     "connection": "مشكلة في الاتصال. يرجى التحقق من اتصالك.",
     "undefinedTitle": "هناك خطأ ما!",
@@ -153,6 +156,8 @@
     "updateOrderStatus": "حدث خطأ أثناء تحديث حالة الطلب"
   },
   "successMessage": {
+    "statusUpdatedTrackingStopped":  "تم تحديث الحالة وإيقاف تتبع الموقع",
+    "statusUpdatedWithTracking": "تم تحديث الحالة وبدأ تتبع الموقع",
     "paymentTitle": "تمت عملية الدفع بنجاح",
     "paymentDesc": "تمت عملية الدفع بنجاح وسيتم التواصل معك لتأكيد الطلب",
     "rateAdd": "تم إرسال تقييمك بنجاح !",
@@ -201,7 +206,8 @@
       "discount": "خصم",
       "deliveryFee": "رسوم التوصيل",
       "addition": "ضريبة القيمة المضافة",
-      "sum": "المجموع الكلي"
+      "sum": "المجموع الكلي",
+      "merchant": "المتجر"
     }
   },
   "buttons": {
